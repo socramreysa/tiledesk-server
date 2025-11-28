@@ -1,0 +1,19 @@
+{
+  "watch": [
+    "app.js",
+    "routes",
+    "models",
+    "services",
+    "middleware",
+    "pubmodules",
+    "channels"
+  ],
+  "ext": "js,json",
+  "ignore": [
+    "public",
+    "uploads",
+    "qdrant_storage",
+    "mongodb-data",
+    "node_modules"
+  ]
+}

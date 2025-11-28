@@ -4,6 +4,7 @@
   "version": "2.13.31",
   "scripts": {
     "start": "node ./bin/www",
+    "dev": "nodemon ./bin/www",
     "pretest": "mongodb-runner start",
     "watchenv": "nodemon --watch .env --watch ./confenv/.env ./bin/www",
     "test": "mocha ./test/*.js ./pubmodules/**/test/*.js ./modules/**/test/*.js ./channels/*/test/*.js ./node_modules/@tiledesk-ent/**/test/*.js  --exit",
@@ -24,6 +25,12 @@
   "engines": {
     "node": "16.17.0",
     "npm": "8.15.0"
+  },
+  "overrides": {
+    "minimist": "1.2.8",
+    "minimist-string": {
+      "minimist": "1.2.8"
+    }
   },
   "bin": {
     "tiledesk-server": "./bin/www"

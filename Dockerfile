@@ -1,34 +1,10 @@
-FROM node:18-bullseye
-
-RUN sed -i 's/stable\/updates/stable-security\/updates/' /etc/apt/sources.list
-
-
-RUN apt-get update
-
-# Create app directory
-WORKDIR /usr/src/app
-
-ARG NPM_TOKEN
-
-RUN if [ "$NPM_TOKEN" ]; \
-    then RUN COPY .npmrc_ .npmrc \
-    else export SOMEVAR=world; \
-    fi
-
-
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
+FROM node:18-alpine
+WORKDIR /app
 COPY package*.json ./
-
-RUN npm install --production
-
-RUN rm -f .npmrc
-
-# Bundle app source
+RUN npm install --omit=dev
 COPY . .
-
+ENV NODE_ENV=production
+ENV PORT=3000
 EXPOSE 3000
-
-CMD [ "npm", "start" ]
+CMD ["npm", "start"]
 

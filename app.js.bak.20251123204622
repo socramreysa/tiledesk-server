@@ -11,8 +11,7 @@ if (process.env.LOAD_DOTENV_SUBFOLDER ) {
 }
 
 require('dotenv').config({ path: dotenvPath});
-console.log('>>> [DEBUG] MONGODB_URI en app.js =', process.env.MONGODB_URI);
-console.log('>>> [DEBUG] node version =', process.version);
+
 
 var express = require('express');
 var path = require('path');
@@ -38,12 +37,10 @@ var winston = require('./config/winston');
 // DATABASE CONNECTION
 
 // https://bretkikehara.wordpress.com/2013/05/02/nodejs-creating-your-first-global-module/
+var databaseUri = process.env.DATABASE_URI || process.env.MONGODB_URI || config.database;
 
-// Usamos primero MONGODB_URI (la que ya sabemos que funciona con test-mongo.js)
-var databaseUri = process.env.MONGODB_URI || process.env.DATABASE_URI || config.database;
-
-if (!databaseUri) {
-  winston.warn('DATABASE_URI/MONGODB_URI not specified, falling back to localhost.');
+if (!databaseUri) { //TODO??
+  winston.warn('DATABASE_URI not specified, falling back to localhost.');
 }
 
 if (process.env.NODE_ENV == 'test')  {
@@ -51,48 +48,38 @@ if (process.env.NODE_ENV == 'test')  {
 }
 
 const masked_databaseUri = MaskData.maskPhone(databaseUri, {
-  maskWith : "*",
-  unmaskedStartDigits: 15,
-  unmaskedEndDigits: 5
-});
+        maskWith : "*",
+        unmaskedStartDigits: 15, 
+        unmaskedEndDigits: 5
+      });
 
-if (process.env.DISABLE_MONGO_PASSWORD_MASK == true || process.env.DISABLE_MONGO_PASSWORD_MASK == "true")  {
+if (process.env.DISABLE_MONGO_PASSWORD_MASK ==true || process.env.DISABLE_MONGO_PASSWORD_MASK == "true")  {
   winston.info("DatabaseUri: " + databaseUri);
-} else {
+}else {
   winston.info("DatabaseUri masked: " + masked_databaseUri);
 }
+
 
 var autoIndex = true;
 if (process.env.MONGOOSE_AUTOINDEX) {
   autoIndex = process.env.MONGOOSE_AUTOINDEX;
 }
+
 winston.info("DB AutoIndex: " + autoIndex);
 
-mongoose.set('useFindAndModify', false);
-mongoose.set('useCreateIndex', true);
-// no forzamos useUnifiedTopology global a false
-
-mongoose
-  .connect(databaseUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 60000,
-    autoIndex: autoIndex
-  })
-  .then(() => {
-    winston.info(
-      "Mongoose connection done on host: " +
-      mongoose.connection.host +
-      " on port: " +
-      mongoose.connection.port +
-      " with name: " +
-      mongoose.connection.name
-    );
-  })
-  .catch(err => {
-    winston.error('Failed to connect to MongoDB on ' + databaseUri + ' ', err);
+var connection = mongoose.connect(databaseUri, { "useNewUrlParser": true, "autoIndex": autoIndex }, function(err) {
+  if (err) { 
+    winston.error('Failed to connect to MongoDB on ' + databaseUri + " ", err);
     process.exit(1);
-  }); 
+  }
+  winston.info("Mongoose connection done on host: "+mongoose.connection.host + " on port: " + mongoose.connection.port + " with name: "+ mongoose.connection.name)// , mongoose.connection.db);
+});
+if (process.env.MONGOOSE_DEBUG==="true") {
+  mongoose.set('debug', true);
+}
+mongoose.set('useFindAndModify', false); // https://mongoosejs.com/docs/deprecations.html#-findandmodify-
+mongoose.set('useCreateIndex', true);
+mongoose.set('useUnifiedTopology', false); 
 
 // CONNECT REDIS - CHECK IT
 const { TdCache } = require('./utils/TdCache');
@@ -456,7 +443,7 @@ if (process.env.ROUTELOGGER_ENABLED==="true") {
 }
 
 app.get('/', function (req, res) {
-  res.send('Hello from Tiledesk server.(HOT RELOAD ON). It\'s UP. See the documentation here http://developer.tiledesk.com');
+  res.send('Hello from Tiledesk server. It\'s UP. See the documentation here http://developer.tiledesk.com');
 });
   
 
